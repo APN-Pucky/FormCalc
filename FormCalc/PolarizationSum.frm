@@ -1,37 +1,31 @@
 * PolarizationSum.frm
 * the FORM part of the PolarizationSum function
 * this file is part of FormCalc
-* last modified 9 Dec 16 th
+* last modified 16 Apr 18 th
 
 
 #procedure Prepare
-#call Square
-#call eiei
-
-#call ConstBracket
+b `Vectors', Mat, SumOver;
 .sort
 
-collect mulM;
+collect mulM, mulM;
 
-id Conjugate([f]?LOOPINT(?x)) = Conjugate([f](?x));
-also Conjugate(?x) = mulM(Conjugate(?x));
+argument mulM;
+argument Conjugate;
+toPolynomial onlyfunctions;
+endargument;
+toPolynomial onlyfunctions;
+endargument;
 
-moduleoption polyfun=mulM;
 .sort
+on oldfactarg;
 
 #call Factor(mulM)
 
-b mulM;
 .sort
-keep brackets;
+off oldfactarg;
 
-argument mulM;
-toPolynomial;
-endargument;
-
-toPolynomial;
-
-.sort
+toPolynomial onlyfunctions mulM;
 #endprocedure
 
 ***********************************************************************
@@ -123,27 +117,15 @@ id D = Dminus4Eps + 4;
 #call DotSimplify
 #call Abbreviate
 
-b SumOver, Conjugate, Den;
-.sort
-
-collect mulM, mulM;
-makeinteger mulM;
-
-argument mulM;
-toPolynomial;
-endargument;
-
-b Conjugate, mulM;
-.sort
-keep brackets;
-
-toPolynomial;
+#ifndef `Prepared'
+#call Prepare
+#endif
 
 .sort
 
 #write "%X"
 
-b SumOver, Den;
+b SumOver, Den, Mat;
 print +s;
 .end
 #endprocedure
@@ -153,7 +135,7 @@ print +s;
 #call CommonDecl
 
 s D, Dminus4, Dminus4Eps;
-cf SumOver, Den, Conjugate;
+cf SumOver, Den, Mat, Conjugate;
 cf [f];
 t ET, ETC;
 

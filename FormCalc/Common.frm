@@ -1,7 +1,7 @@
 * Common.frm
 * FORM procedures common to CalcFeynAmp, HelicityME, PolarizationSum
 * this file is part of FormCalc
-* last modified 13 Feb 17 th
+* last modified 13 Apr 18 th
 
 
 #procedure CommonDecl
@@ -50,15 +50,16 @@ id `foo'([x]?, ?a) = `foo'([x]);
 
 #procedure Factor(foo)
 factarg `foo';
-id `foo'(?x) = mulM(`foo'(?x));
-argument mulM;
+id `foo'(?x) = TMP(`foo'(?x));
+argument TMP;
 chainout `foo';
 makeinteger `foo';
 id `foo'([x]?) = `foo'(nterms_([x]), [x]);
 id `foo'(1, [x]?) = [x];
 id `foo'([n]?, [x]?) = `foo'([x]);
 endargument;
-makeinteger mulM;
+makeinteger TMP;
+id TMP(?a) = mulM(?a);
 #endprocedure
 
 ***********************************************************************
@@ -137,7 +138,6 @@ id ETAG^[n]?{>1} = ETAG;
 
 ab k1,...,k`Legs';
 .sort
-on oldFactArg;
 
 collect dotM, dotM, 50;
 makeinteger dotM;
@@ -156,7 +156,6 @@ keep brackets;
 id dotM([x]?) = [x];
 
 .sort
-off oldFactArg;
 
 id TAG = 1;
 
@@ -164,16 +163,17 @@ id TAG = 1;
 
 b dotM;
 .sort
-*keep brackets;
+on oldfactarg;
+keep brackets;
 
 factarg dotM;
 chainout dotM;
+id dotM([n]?number_) = [n];
 makeinteger dotM;
-id dotM(1) = 1;
 
 ab `Vectors', `Invariants', dotM;
 .sort
-off oldFactArg;
+off oldfactarg;
 
 collect dotM, dotM, 50;
 
@@ -255,7 +255,7 @@ moduleoption polyfun=abbM;
 
 b abbM;
 .sort
-on oldFactArg;
+on oldfactarg;
 keep brackets;
 
 id abbM([x]?) = abbM(nterms_([x]), [x]);
@@ -271,7 +271,7 @@ id abbM(1) = 1;
 
 b abbM;
 .sort
-off oldFactArg;
+off oldfactarg;
 keep brackets;
 
 toPolynomial onlyfunctions abbM;
@@ -284,7 +284,7 @@ collect dotM;
 
 moduleoption polyfun=dotM;
 .sort
-on oldFactArg;
+on oldfactarg;
 
 #call Factor(dotM)
 
@@ -301,7 +301,7 @@ moduleoption polyfun=mulM;
 
 b mulM;
 .sort
-off oldFactArg;
+off oldfactarg;
 keep brackets;
 
 argument mulM;
