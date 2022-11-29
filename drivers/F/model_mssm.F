@@ -2,7 +2,7 @@
 * all parameters for the MSSM are initialized here
 * this file is part of FormCalc
 * Christian Schappacher, 17 Feb 99
-* last modified 29 Jan 16 th
+* last modified 06 Jun 17 cs
 
 
 * The input parameters for model_mssm are:
@@ -492,12 +492,12 @@
 * The "regular" ones are needed for computing the Higgs mass.
 
 	do t = FV, 4
-	  MX2_LL(1,1) = MSS2(1,4,1)
-	  MX2_LL(2,2) = MSS2(1,4,2)
-	  MX2_LL(3,3) = MSS2(1,4,3)
-	  MX2_LL(1,2) = MSS(1,4,1)*MSS(1,4,2)*deltaSf_LL(1,2,4)
-	  MX2_LL(2,3) = MSS(1,4,2)*MSS(1,4,3)*deltaSf_LL(2,3,4)
-	  MX2_LL(1,3) = MSS(1,4,1)*MSS(1,4,3)*deltaSf_LL(1,3,4)
+	  MX2_LL(1,1) = MSS2(1,t,1)
+	  MX2_LL(2,2) = MSS2(1,t,2)
+	  MX2_LL(3,3) = MSS2(1,t,3)
+	  MX2_LL(1,2) = MSS(1,t,1)*MSS(1,t,2)*deltaSf_LL(1,2,t)
+	  MX2_LL(2,3) = MSS(1,t,2)*MSS(1,t,3)*deltaSf_LL(2,3,t)
+	  MX2_LL(1,3) = MSS(1,t,1)*MSS(1,t,3)*deltaSf_LL(1,3,t)
 	  if( t .eq. 3 ) then
 	    do g2 = 1, 3
 	      m1 = MX2_LL(1,1)*CKMC(g2,1) +
@@ -572,7 +572,7 @@
 	f1 = m1 + m2 - c1
 	f2 = m1 + m2 - c1*(2 + m1/m2*logm1m2)
      &   + (m1 + m2)*m1**2/(m1 - m2)**2 * logm1m2**2
-     &   - 2*(m1 - m2) * Li2(1 - m1/m2)
+     &   - 2*(m1 - m2) * Re(Li2(1 - m1/m2))
 
 	f1f2 = 3*GF/(8*sqrt2*pi**2) * (f1 + 2/(3*pi)*AlfasMT*f2)
 	end
@@ -805,18 +805,23 @@
 
 	RealType MTr2, Qsusy, Lam
 	RealType Xt, topstop, toplog, mix
-	RealType Pb, Pf, Pg, Pg_, P1h, P2h, P2h_
+	RealType Pbf, Pg2h, Pg2h_, P1h, P2h, P2h_
 	RealType pref, pref2, tmp, tmplog
 	RealType sig11, sig12, sig22
 	RealType avgMH2, deltaMH2
 
-	RealType MtLR, MbLR
-	equivalence (Xf(3,3), MtLR)
-	equivalence (Xf(4,3), MbLR)
+	RealType Xtr, Xbr, Atr, Abr, MUEr
+	equivalence (Xf(3,3), Xtr)
+	equivalence (Xf(4,3), Xbr)
+	equivalence (Af(3,3,3), Atr)
+	equivalence (Af(4,3,3), Abr)
+	equivalence (MUE, MUEr)
 
 	integer Nc, Ng
 	RealType Qt, Qb
 	parameter (Nc = 3, Ng = 3, Qt = 2/3D0, Qb = -1/3D0)
+
+#include "inline.h"
 
 * this is the running top mass:
 	MTr2 = MT2/(1 + 4/(3*pi)*AlfasMT)**2
@@ -833,7 +838,7 @@
 
 * FeynHiggsFast approximation: hep-ph/9903404 (only for real case)
 	Qsusy = SusyScale(MT2)
-	mix = MtLR**2/Qsusy
+	mix = Xtr**2/Qsusy
 
 * The one-loop top/stop contributions:
 	Lam = 1/8D0 - SW2*(1/3D0 - 4/9D0*SW2)
@@ -856,8 +861,8 @@
 
 * The dominant two-loop top/stop contributions:
 	toplog = log(MTr2/Qsusy)
-	tmp = (MSf2(2,3,3) - MSf2(1,3,3))/MTr2
-     &    * (USf(1,1,3,3)*USf(2,1,3,3))**2
+	tmp = (MSf2(2,3,3) - MSf2(1,3,3))/MTr2 *
+     &    Sq(USf(1,1,3,3)*USf(2,1,3,3))
 	tmplog = log(MSf2(2,3,3)/MSf2(1,3,3))
 	Xt = tmp*(
      &    tmp*(2 - (MSf2(2,3,3) + MSf2(1,3,3))/
@@ -866,16 +871,18 @@
 	tmplog = log(MSf(2,3,3)*MSf(1,3,3)/MTr2)
 	sig22 = sig22 + MTr2**2/SB2 * (
      &    + GF*sqrt2/pi**3*AlfasMT*(toplog*(3*toplog - 6)
-     &      - 6*sign(sqrt(mix), MtLR) + mix*(-3*toplog + 3/4D0*mix))
+     &      - 6*sign(sqrt(mix), Xtr) + mix*(-3*toplog + 3/4D0*mix))
      &    - 9*GF**2/(16*pi**4)*MTr2* tmplog*(Xt + tmplog) )
 
 * The one-loop leading-log contributions from all other sectors:
 * [NB: MSQ is used here instead of MSusy.]
-	Pb = Nc*(1 + 4*Qb*SW2*(1 + 2*Qb*SW2))
-	Pf = Nc*(Ng - 1)*(2 - SW2*(4 - 8*(Qt**2 + Qb**2)*SW2))
-     &    + Ng*(2 - SW2*(4 - 8*SW2))
-	Pg = -44 + SW2*(106 - 62*SW2)
-	Pg_ = 10 + SW2*(34 - 26*SW2)
+	Pbf = Nc*(1 + 4*Qb*SW2*(1 + 2*Qb*SW2)) +
+     &    Nc*(Ng - 1)*(2 - SW2*(4 - 8*(Qt**2 + Qb**2)*SW2)) +
+     &    Ng*(2 - SW2*(4 - 8*SW2))
+*	Pg = -44 + SW2*(106 - 62*SW2)
+*	Pg_ = 10 + SW2*(34 - 26*SW2)
+	Pg2h = -10 + (20 - 64*CW2)*CW2
+	Pg2h_ = 14 + (20 - 16*CW2)*CW2
 	P1h = (1 - 2*SW2*CW2 - 9*C2B**2)*C2B**2
 	P2h = -10 + 2*SW2*CW2
 	P2h_ = 8 - SW2*(22 - 10*SW2)
@@ -883,23 +890,19 @@
 	tmp = MB2/(MZ2*CB2)
 	pref = GF*MZ2**2/(12*sqrt2*pi**2)
 	pref2 = GF*Nc/(4*sqrt2*pi**2)*MB2/MSS2(1,3,3)
-	sig11 = sig11
-     &    - pref*CB2
-     &      *(6*Nc*tmp*(2*tmp - 1) + Pb + Pf + Pg + P2h)*tmplog
-     &    - pref2*Af(4,3,3)
-     &      *(4*MB2*MbLR/CB2*(1 - Af(4,3,3)*MbLR/(12*MSS2(1,3,3)))
-     &        - MZ2*(MbLR + Af(4,3,3)/3D0))
-	sig12 = sig12
-     &    - pref*SB*CB*(3*Nc*tmp - Pb - Pf - Pg_ - P2h_)*tmplog
-     &    + .5D0*pref2
-     &      *(4*MB2*MUE*MbLR/CB2*(1 - Af(4,3,3)*MbLR/(6*MSS2(1,3,3)))
-     &        - MZ2*TB*(MbLR*(Af(4,3,3) + MUE/TB)
-     &                  + (MUE**2 + Af(4,3,3)**2)/3D0))
-	sig22 = sig22
-     &    - pref*SB2*(Pb + Pf + Pg + P2h)*tmplog
-     &    + pref2*MUE
-     &      *(MB2*MUE*MbLR**2/(3*CB2*MSS2(1,3,3))
-     &        + MZ2*TB*(MbLR + MUE*TB/3D0))
+	sig11 = sig11 -
+     &    pref*CB2*(6*Nc*tmp*(2*tmp - 1) + Pbf + Pg2h)*tmplog -
+     &    pref2*Abr*(4*MB2*Xbr/CB2*(1 - Abr*Xbr/(12*MSS2(1,3,3))) -
+     &      MZ2*(Xbr + Abr/3D0))
+	sig12 = sig12 -
+     &    pref*SB*CB*(3*Nc*tmp - Pbf - Pg2h_)*tmplog +
+     &    .5D0*pref2*
+     &      (4*MB2*MUEr*Xbr/CB2*(1 - Abr*Xbr/(6*MSS2(1,3,3))) -
+     &        MZ2*TB*(Xbr*(Abr + MUEr/TB) + (MUEr**2 + Abr**2)/3D0))
+	sig22 = sig22 -
+     &    pref*SB2*(Pbf + Pg2h)*tmplog +
+     &    pref2*MUEr*(MB2*MUEr*Xbr**2/(3*CB2*MSS2(1,3,3)) +
+     &      MZ2*TB*(Xbr + MUEr*TB/3D0))
 	if( MA02 .gt. MZ2 ) then
 	  tmplog = log(MA02/MZ2)
 	  sig11 = sig11 - pref*CB2*(P1h - P2h)*tmplog
@@ -950,16 +953,17 @@
 #include "decl.h"
 
 	integer mssmpart, fieldren, tanbren, higgsmix, p2approx
-	integer looplevel, runningMT, botResum, tlCplxApprox
+	integer looplevel, loglevel, runningMT, botResum, tlCplxApprox
 	parameter (mssmpart = 4)
 	parameter (fieldren = 0)
 	parameter (tanbren = 0)
 	parameter (higgsmix = 2)
-	parameter (p2approx = 0)
+	parameter (p2approx = 4)
 	parameter (looplevel = 2)
+	parameter (loglevel = 0)
 	parameter (runningMT = 1)
 	parameter (botResum = 1)
-	parameter (tlCplxApprox = 3)
+	parameter (tlCplxApprox = 0)
 
 	RealType scalefactor
 	RealType Qtau, Qt, Qb
@@ -970,14 +974,15 @@
 
 	ComplexType SAeff
 
-	call FHSetFlags(fail, mssmpart, fieldren, tanbren, higgsmix,
-     &    p2approx, looplevel, runningMT, botResum, tlCplxApprox)
+	call FHSetFlags(fail, mssmpart, fieldren, tanbren,
+     &    higgsmix, p2approx, looplevel, loglevel, runningMT,
+     &    botResum, tlCplxApprox)
 	if( fail .ne. 0 ) return
 
 	call FHSetSMPara(fail,
-     &    1/Alfa, AlfasMZ, GF,
+     &    1/Alfa, 1/AlfaMZ, AlfasMZ, GF,
      &    ME, MU, MD, MM, MC, MS, ML, MBatMB,
-     &    MW, MZ,
+     &    MW, MZ, GammaW, GammaZ,
 #ifdef NO_CKM
      &    0D0, 0D0, 0D0, 0D0)
 #else
@@ -996,7 +1001,7 @@
      &    Af(2,1,1), Af(3,1,1), Af(4,1,1),
      &    Mino1, Mino2, Mino3,
      &    Qtau, Qt, Qb)
-        if( fail .ne. 0 ) return
+	if( fail .ne. 0 ) return
 
 #if FV >= 2
 	call FHSetLFV(fail,
